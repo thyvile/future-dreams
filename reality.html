@@ -12,7 +12,7 @@
             margin: 0;
             overflow: hidden;
             font-family: 'VT323', monospace; /* Retro terminal font */
-            background-color: #87CEEB;
+            background-color: #6fb8ff;
             touch-action: none;
         }
         
@@ -225,9 +225,9 @@
         // --- GLOBAL CONFIG ---
         const CONFIG = {
             CHUNK_SIZE: 100,
-            CHUNK_RES: 32, 
+            CHUNK_RES: 32,
             RENDER_DISTANCE: 3,
-            FOG_COLOR: 0xaaccff,
+            FOG_COLOR: 0x7fc8ff,
             WALK_SPEED: 800.0, 
             RUN_SPEED: 2500.0,
             JUMP_FORCE: 140.6, 
@@ -279,14 +279,14 @@
             },
             mats: {
                 palmTrunk: new THREE.MeshPhongMaterial({color:0x8B4513}),
-                palmLeaves: new THREE.MeshPhongMaterial({color:0x228822}),
+                palmLeaves: new THREE.MeshPhongMaterial({color:0x18b03a}),
                 crystal: new THREE.MeshPhongMaterial({color:0xaaccff, shininess: 90, transparent:true, opacity:0.8, emissive: 0x112244}),
                 pillar: new THREE.MeshPhongMaterial({color:0x220033, emissive: 0x110022, shininess: 100}),
                 sakuraTrunk: new THREE.MeshPhongMaterial({color:0x3e2723}),
                 sakuraLeaves: new THREE.MeshPhongMaterial({color:0xffb7c5}),
                 cyberSpike: new THREE.MeshPhongMaterial({color:0x000000, emissive: 0x00ff00, wireframe: true}),
                 bigTrunk: new THREE.MeshPhongMaterial({ color: 0x553311 }),
-                bigLeaves: new THREE.MeshPhongMaterial({ color: 0x00aa44 }),
+                bigLeaves: new THREE.MeshPhongMaterial({ color: 0x00c84f }),
                 
                 // Cloud (Basic Material for pure white)
                 cloud: new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.9}),
@@ -409,15 +409,16 @@
 
         function createCheckerBoardTexture() {
             const canvas = document.createElement('canvas');
-            canvas.width = 256; 
+            canvas.width = 256;
             canvas.height = 256;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, 256, 256);
-            ctx.fillStyle = '#000000'; 
-            const size = 32;
-            for (let y = 0; y < 8; y++) {
-                for (let x = 0; x < 8; x++) {
+            ctx.fillStyle = '#000000';
+            const size = 64;
+            const tiles = canvas.width / size;
+            for (let y = 0; y < tiles; y++) {
+                for (let x = 0; x < tiles; x++) {
                     if ((x + y) % 2 === 0) ctx.fillRect(x * size, y * size, size, size);
                 }
             }
@@ -425,7 +426,7 @@
             tex.wrapS = THREE.RepeatWrapping;
             tex.wrapT = THREE.RepeatWrapping;
             tex.magFilter = THREE.NearestFilter;
-            tex.minFilter = THREE.LinearMipMapLinearFilter; 
+            tex.minFilter = THREE.LinearMipMapLinearFilter;
             if (renderer) tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
             return tex;
         }
@@ -531,16 +532,16 @@
                 else if (biome === 'obsidian') color.setHex(0x220033);
                 else if (biome === 'sakura') color.setHex(0xffb7c5);
                 else if (biome === 'water') {
-                    color.setHSL(0.55, 0.32, 0.3 + Math.sin((x + z) * 0.01) * 0.02);
+                    color.setHSL(0.57, 0.48, 0.32 + Math.sin((x + z) * 0.01) * 0.02);
                 }
                 else if (biome === 'cyber') {
                     if (Math.floor(x)%10 === 0 || Math.floor(z)%10 === 0) color.setHex(0x00ff00);
                     else color.setHex(0x111111);
                 } else {
-                    if (y < CONFIG.WATER_LEVEL) color.setHex(0xc2b280); 
+                    if (y < CONFIG.WATER_LEVEL) color.setHex(0xc2b280);
                     else {
                         const v = (y / 50) + 0.2;
-                        color.setHSL(0.3, 0.6, Math.max(0.2, Math.min(0.8, v)));
+                        color.setHSL(0.32, 0.8, Math.max(0.2, Math.min(0.8, v)));
                     }
                 }
                 colors.push(color.r, color.g, color.b);
@@ -561,28 +562,27 @@
             scene.add(mesh);
             
             let waterRef = null;
-            const isWaterBiome = centerBiome === 'water';
             if (centerBiome !== 'desert' && centerBiome !== 'obsidian') {
-                const waterSegs = isWaterBiome ? res : Math.max(8, res/2);
+                const waterSegs = res;
                 const waterGeo = new THREE.PlaneGeometry(size, size, waterSegs, waterSegs);
                 waterGeo.rotateX(-Math.PI / 2);
                 waterGeo.translate(offsetX, CONFIG.WATER_LEVEL, offsetZ);
 
                 const waterMat = new THREE.MeshPhysicalMaterial({
-                    color: isWaterBiome ? 0x1f7ae0 : 0x0066ff,
-                    emissive: isWaterBiome ? 0x0b2d57 : 0x001133,
-                    emissiveIntensity: isWaterBiome ? 0.5 : 0.25,
-                    metalness: isWaterBiome ? 0.6 : 0.2,
-                    roughness: isWaterBiome ? 0.08 : 0.2,
-                    transmission: isWaterBiome ? 0.65 : 0.35,
-                    thickness: isWaterBiome ? 2.5 : 1.2,
+                    color: 0x1b7fe8,
+                    emissive: 0x0c3f75,
+                    emissiveIntensity: 0.55,
+                    metalness: 0.75,
+                    roughness: 0.05,
+                    transmission: 0.7,
+                    thickness: 3.2,
                     clearcoat: 1,
-                    clearcoatRoughness: 0.08,
-                    reflectivity: isWaterBiome ? 0.9 : 0.6,
+                    clearcoatRoughness: 0.04,
+                    reflectivity: 0.98,
                     transparent: true,
-                    opacity: 0.8,
+                    opacity: 0.84,
                     side: THREE.DoubleSide,
-                    envMapIntensity: 1.1
+                    envMapIntensity: 1.35
                 });
 
                 const waterMesh = new THREE.Mesh(waterGeo, waterMat);
@@ -592,11 +592,11 @@
                 waterRef = {
                     mesh: waterMesh,
                     baseVertices: [],
-                    waveAmp: isWaterBiome ? 1.6 : 0.6,
-                    waveFrequency: isWaterBiome ? 0.18 : 0.12,
-                    waveSpeed: isWaterBiome ? 0.0035 : 0.002,
-                    shimmerPhase: 0,
-                    baseGlow: isWaterBiome ? 0.5 : 0.25
+                    waveAmp: 1.4,
+                    waveFrequency: 0.18,
+                    waveSpeed: 0.0035,
+                    shimmerPhase: Math.random() * Math.PI * 2,
+                    baseGlow: 0.55
                 };
                 const wPos = waterGeo.attributes.position;
                 for(let i=0; i<wPos.count; i++) {
@@ -930,11 +930,17 @@
 
         function createGrandCathedral(x, z) {
             const group = new THREE.Group();
-            const scale = 3; 
+            const scale = 3;
             const glassMat = new THREE.MeshPhongMaterial({color: 0x88ccff, shininess: 100, specular: 0xffffff, transparent: true, opacity: 0.6, side: THREE.DoubleSide});
             const floorTex = createCheckerBoardTexture();
             floorTex.repeat.set(16, 16);
+            floorTex.needsUpdate = true;
+            const bridgeTex = floorTex.clone();
+            bridgeTex.repeat.copy(floorTex.repeat);
+            bridgeTex.needsUpdate = true;
             const floorMat = new THREE.MeshPhongMaterial({map: floorTex, shininess: 60, specular: 0x444444, side: THREE.DoubleSide});
+            const bridgeMat = floorMat.clone();
+            bridgeMat.map = bridgeTex;
 
             const addObj = (mesh) => {
                 group.add(mesh);
@@ -959,12 +965,13 @@
 
             const wingLen = 80 * scale;
             const wingWid = 20 * scale;
+            const deckHeight = (1 * scale) + 0.2;
             const addWing = (angle) => {
                 const dist = atriumRadius + wingLen/2 - 2*scale;
                 const wx = Math.sin(angle) * dist;
                 const wz = Math.cos(angle) * dist;
-                const bridge = new THREE.Mesh(new THREE.BoxGeometry(wingWid, 2*scale, wingLen), floorMat);
-                bridge.position.set(wx, 1*scale, wz);
+                const bridge = new THREE.Mesh(new THREE.BoxGeometry(wingWid, 2*scale, wingLen), bridgeMat);
+                bridge.position.set(wx, deckHeight, wz);
                 bridge.rotation.y = angle;
                 addObj(bridge);
                 const roof = new THREE.Mesh(new THREE.BoxGeometry(wingWid + 4*scale, 1*scale, wingLen), glassMat);
