@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FUTURE DREAMS v3.3</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'VT323', monospace; /* Retro terminal font */
+            background-color: #87CEEB;
+            touch-action: none;
+        }
+        
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #333;
+            pointer-events: none;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 #fff;
+            z-index: 5;
+            font-size: 1.2rem;
+        }
+
+        #instructions {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            color: #fff;
+            text-align: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: opacity 0.5s;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            margin-bottom: 10px;
+            color: #ff00ff;
+            text-shadow: 
+                4px 4px 0px #00ffff, 
+                -2px -2px 0px #ffffff;
+        }
+
+        p {
+            font-size: 1.5rem;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        #controls-hint {
+            margin-top: 20px;
+            color: #cccccc;
+            font-size: 1rem;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border: 1px solid #00ffff;
+            border-radius: 4px;
+        }
+
+        #config-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 15px;
+            border-radius: 0;
+            border: 2px solid #ff00ff;
+            box-shadow: 4px 4px 0 #00ffff;
+            z-index: 6;
+            width: 200px;
+            font-size: 1rem;
+            display: none;
+        }
+        .control-group { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 3px; color: #00ffff; }
+        input[type=range] { width: 100%; accent-color: #ff00ff; }
+        
+        button#toggle-config {
+            pointer-events: auto;
+            background: #000;
+            color: #ff00ff;
+            border: 2px solid #ff00ff;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+        }
+        button#toggle-config:hover {
+            background: #ff00ff;
+            color: #000;
+        }
+
+        #mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        #joystick-zone {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            pointer-events: auto;
+            border: 2px solid rgba(255,0,255,0.5);
+        }
+
+        #joystick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 255, 255, 0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(0,255,255,0.5);
+        }
+
+        #jump-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 0, 255, 0.6);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            box-shadow: 0 0 15px rgba(255,0,255,0.5);
+            user-select: none;
+        }
+
+        #touch-look-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 15;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        SYSTEM: FUTURE_DREAMS_v3.3<br>
+        COORDS: <span id="coords">0, 0</span><br>
+        <button id="toggle-config">CONFIG</button>
+    </div>
+
+    <div id="config-panel">
+        <div class="control-group">
+            <label>Fog Density</label>
+            <input type="range" id="fog-range" min="0" max="0.02" step="0.001" value="0.003">
+        </div>
+        <div class="control-group">
+            <label>Sun Intensity</label>
+            <input type="range" id="sun-range" min="0" max="3" step="0.1" value="1.2">
+        </div>
+        <div class="control-group">
+            <label>Render Dist</label>
+            <input type="range" id="render-range" min="2" max="6" step="1" value="3">
+        </div>
+    </div>
+
+    <div id="instructions">
+        <h1>FUTURE DREAMS</h1>
+        <p id="pc-msg">Click to Initialize Reality</p>
+        <p id="controls-hint">WASD to Move | SHIFT to Run | SPACE to Jump</p>
+    </div>
+
+    <div id="mobile-controls">
+        <div id="joystick-zone"><div id="joystick-knob"></div></div>
+        <div id="jump-btn">JUMP</div>
+    </div>
+    
+    <div id="touch-look-zone" style="display:none;"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        // --- GLOBAL CONFIG ---
+        const CONFIG = {
+            CHUNK_SIZE: 100,
+            CHUNK_RES: 32, 
+            RENDER_DISTANCE: 3,
+            FOG_COLOR: 0xaaccff,
+            WALK_SPEED: 800.0, 
+            RUN_SPEED: 2500.0,
+            JUMP_FORCE: 140.6, 
+            PLAYER_HEIGHT: 15,
+            PLAYER_RADIUS: 4, 
+            WATER_LEVEL: -2,
+            PHYSICS_STEPS: 4,
+            STEP_HEIGHT: 8.0,
+            SKY_RANGE: 2000 // The range for flying entity wrapping
+        };
+
+        // --- ASSET CACHE ---
+        const ASSETS = {
+            geoms: {
+                // Palm
+                palmTrunk: new THREE.CylinderGeometry(2.5, 3.5, 30, 9),
+                palmLeaf: new THREE.ConeGeometry(20, 5, 5),
+                
+                // Crystal
+                crystal: new THREE.DodecahedronGeometry(10, 0),
+                
+                // Pillar
+                pillar: new THREE.ConeGeometry(5, 45, 5),
+                
+                // Sakura
+                sakuraTrunk: new THREE.CylinderGeometry(3, 4, 24, 8),
+                sakuraCloud: new THREE.SphereGeometry(10, 7, 7),
+                sakuraBranch: new THREE.CylinderGeometry(0.8, 1.2, 8, 4), 
+                
+                // Cyber
+                cyberSpike: new THREE.IcosahedronGeometry(8, 0),
+                
+                // Big Tree (Pine Style)
+                bigTrunk: new THREE.CylinderGeometry(2.5, 4.0, 15, 9),
+                bigLeavesBottom: new THREE.ConeGeometry(16, 20, 9),
+                bigLeavesMid: new THREE.ConeGeometry(12, 16, 9),
+                bigLeavesTop: new THREE.ConeGeometry(8, 12, 9),
+                
+                // Cloud Parts
+                cloudPuff: new THREE.DodecahedronGeometry(20, 0),
+                
+                // Whale Parts (SCALED UP 4X for visibility)
+                whaleBody: new THREE.CapsuleGeometry(20, 80, 8, 16),
+                whaleTail: new THREE.ConeGeometry(24, 20, 10),
+                whaleFin: new THREE.ConeGeometry(16, 32, 5)
+            },
+            mats: {
+                palmTrunk: new THREE.MeshPhongMaterial({color:0x8B4513}),
+                palmLeaves: new THREE.MeshPhongMaterial({color:0x228822}),
+                crystal: new THREE.MeshPhongMaterial({color:0xaaccff, shininess: 90, transparent:true, opacity:0.8, emissive: 0x112244}),
+                pillar: new THREE.MeshPhongMaterial({color:0x220033, emissive: 0x110022, shininess: 100}),
+                sakuraTrunk: new THREE.MeshPhongMaterial({color:0x3e2723}),
+                sakuraLeaves: new THREE.MeshPhongMaterial({color:0xffb7c5}),
+                cyberSpike: new THREE.MeshPhongMaterial({color:0x000000, emissive: 0x00ff00, wireframe: true}),
+                bigTrunk: new THREE.MeshPhongMaterial({ color: 0x553311 }),
+                bigLeaves: new THREE.MeshPhongMaterial({ color: 0x00aa44 }),
+                
+                // Cloud (Basic Material for pure white)
+                cloud: new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.9}),
+                
+                whaleBody: new THREE.MeshPhongMaterial({color: 0x4466ff, shininess: 80, specular: 0x1111ff}),
+            }
+        };
+
+        // --- STATE ---
+        let camera, scene, renderer, controls;
+        let raycasterDown, raycasterHorizontal;
+        
+        const staticColliders = []; 
+        const chunks = {}; 
+        const flyingEntities = [];
+        let bgm;
+        
+        const velocity = new THREE.Vector3();
+        const playerDirection = new THREE.Vector3();
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let canJump = false;
+        let isRunning = false;
+        let prevTime = performance.now();
+        
+        let isMobile = false;
+        let joyVector = { x: 0, y: 0 };
+        
+        const seed = 1337;
+        
+        // --- INIT ---
+        init();
+        animate();
+
+        function init() {
+            bgm = new Audio('https://zazenfly.com/bgm2.mp3');
+            bgm.loop = true;
+            bgm.volume = 0.5;
+            bgm.playbackRate = 0.8;
+            if (bgm.preservesPitch !== undefined) bgm.preservesPitch = false;
+            else if (bgm.mozPreservesPitch !== undefined) bgm.mozPreservesPitch = false;
+            else if (bgm.webkitPreservesPitch !== undefined) bgm.webkitPreservesPitch = false;
+
+            isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                document.getElementById('pc-msg').innerText = "Tap to Initialize Reality";
+                document.getElementById('controls-hint').innerText = "Left Stick: Move | Right Screen: Look | Button: Jump";
+                document.getElementById('mobile-controls').style.display = 'block';
+                document.getElementById('touch-look-zone').style.display = 'block';
+            }
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(CONFIG.FOG_COLOR);
+            scene.fog = new THREE.FogExp2(CONFIG.FOG_COLOR, 0.003);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.y = 50; 
+
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+            hemiLight.position.set(0, 200, 0);
+            scene.add(hemiLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffee, 1.0);
+            dirLight.position.set(50, 200, 100);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.camera.far = 500; 
+            dirLight.shadow.camera.left = -200;
+            dirLight.shadow.camera.right = 200;
+            dirLight.shadow.camera.top = 200;
+            dirLight.shadow.camera.bottom = -200;
+            scene.add(dirLight);
+
+            renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+
+            if (!isMobile) setupPCControls();
+            else setupMobileControls();
+
+            raycasterDown = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, 100);
+            raycasterHorizontal = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 0, -1), 0, 10);
+
+            createGrandCathedral(0, 0);
+            createSkySpheres();
+            
+            // FIXED: Spawn spread now matches CONFIG.SKY_RANGE (2000)
+            createWhales(3);
+            createCloudLayer(15); // REDUCED CLOUD COUNT
+            createBirds(50);
+            
+            updateChunks();
+
+            window.addEventListener('resize', onWindowResize);
+            setupUI();
+        }
+
+        function createCheckerBoardTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; 
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 256, 256);
+            ctx.fillStyle = '#000000'; 
+            const size = 32;
+            for (let y = 0; y < 8; y++) {
+                for (let x = 0; x < 8; x++) {
+                    if ((x + y) % 2 === 0) ctx.fillRect(x * size, y * size, size, size);
+                }
+            }
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.magFilter = THREE.NearestFilter;
+            tex.minFilter = THREE.LinearMipMapLinearFilter; 
+            if (renderer) tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            return tex;
+        }
+
+        function pseudoRandom(x, z) {
+            let n = Math.sin(x * 12.9898 + z * 78.233 + seed) * 43758.5453;
+            return n - Math.floor(n);
+        }
+
+        function noise(x, z) {
+            let ix = Math.floor(x); let iz = Math.floor(z);
+            let fx = x - ix; let fz = z - iz;
+            let a = pseudoRandom(ix, iz);
+            let b = pseudoRandom(ix + 1, iz);
+            let c = pseudoRandom(ix, iz + 1);
+            let d = pseudoRandom(ix + 1, iz + 1);
+            let ux = fx * fx * (3.0 - 2.0 * fx);
+            let uz = fz * fz * (3.0 - 2.0 * fz);
+            return (a * (1 - ux) + b * ux) + (c - a) * uz * (1 - ux) + (d - b) * ux * uz;
+        }
+
+        function fbm(x, z) {
+            let v = 0.0; let a = 0.5; let f = 0.02; 
+            for (let i = 0; i < 4; i++) {
+                v += a * noise(x * f, z * f);
+                f *= 2.0; a *= 0.5;
+            }
+            return v;
+        }
+
+        function getBiomeInfo(x, z) {
+            const moisture = noise(x * 0.002, z * 0.002);
+            const temperature = noise(x * 0.002 + 100, z * 0.002 + 100);
+            
+            if (moisture > 0.6 && temperature < 0.4) return 'snow'; 
+            if (temperature > 0.7 && moisture < 0.3) return 'desert'; 
+            if (moisture < 0.2 && temperature < 0.3) return 'obsidian'; 
+            if (moisture > 0.5 && temperature > 0.5) return 'sakura'; 
+            if (moisture < 0.3 && temperature > 0.7) return 'cyber'; 
+            return 'grass'; 
+        }
+
+        function getHeight(x, z, biome) {
+            let h = 0;
+            if (biome === 'desert') {
+                h = Math.sin(x * 0.05) * 5 + Math.cos(z * 0.05) * 5 + fbm(x, z) * 10;
+            } else if (biome === 'snow') {
+                h = fbm(x, z) * 60 + 20;
+            } else if (biome === 'obsidian') {
+                h = Math.abs(fbm(x*2, z*2)) * 40;
+            } else if (biome === 'cyber') {
+                h = Math.floor(fbm(x, z) * 5) * 10; 
+            } else {
+                h = fbm(x, z) * 30;
+            }
+            
+            const dist = Math.sqrt(x*x + z*z);
+            if (dist < 300) {
+                h = h * (dist / 300); 
+                if(dist < 200) h = 0;
+            }
+            return h;
+        }
+
+        function generateChunk(cx, cz) {
+            const size = CONFIG.CHUNK_SIZE;
+            const res = CONFIG.CHUNK_RES;
+            
+            const geo = new THREE.PlaneGeometry(size, size, res, res);
+            geo.rotateX(-Math.PI / 2);
+
+            const posAttr = geo.attributes.position;
+            const colors = [];
+            const offsetX = cx * size;
+            const offsetZ = cz * size;
+
+            geo.translate(offsetX, 0, offsetZ);
+
+            const centerBiome = getBiomeInfo(offsetX, offsetZ);
+
+            for (let i = 0; i < posAttr.count; i++) {
+                const x = posAttr.getX(i);
+                const z = posAttr.getZ(i);
+                const biome = getBiomeInfo(x, z);
+                
+                let y = getHeight(x, z, biome);
+                
+                if ((biome === 'grass' || biome === 'sakura') && y < CONFIG.WATER_LEVEL - 5) {
+                    y = CONFIG.WATER_LEVEL - 5 + (y - (CONFIG.WATER_LEVEL - 5)) * 0.2;
+                }
+
+                posAttr.setY(i, y);
+
+                let color = new THREE.Color();
+                
+                if (biome === 'desert') color.setHex(0xffaa00); 
+                else if (biome === 'snow') color.setHex(y > 40 ? 0xffffff : 0xddddff);
+                else if (biome === 'obsidian') color.setHex(0x220033); 
+                else if (biome === 'sakura') color.setHex(0xffb7c5);
+                else if (biome === 'cyber') {
+                    if (Math.floor(x)%10 === 0 || Math.floor(z)%10 === 0) color.setHex(0x00ff00);
+                    else color.setHex(0x111111);
+                } else {
+                    if (y < CONFIG.WATER_LEVEL) color.setHex(0xc2b280); 
+                    else {
+                        const v = (y / 50) + 0.2;
+                        color.setHSL(0.3, 0.6, Math.max(0.2, Math.min(0.8, v)));
+                    }
+                }
+                colors.push(color.r, color.g, color.b);
+            }
+
+            geo.computeVertexNormals();
+            geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const mat = new THREE.MeshPhongMaterial({
+                vertexColors: true,
+                shininess: 10, 
+                specular: 0x111111,
+                flatShading: false 
+            });
+
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            
+            let waterRef = null;
+            if (centerBiome !== 'desert' && centerBiome !== 'obsidian') {
+                const waterGeo = new THREE.PlaneGeometry(size, size, res/2, res/2);
+                waterGeo.rotateX(-Math.PI / 2);
+                waterGeo.translate(offsetX, CONFIG.WATER_LEVEL, offsetZ);
+                
+                const waterMat = new THREE.MeshPhongMaterial({
+                    color: 0x0066ff,
+                    emissive: 0x001133,
+                    specular: 0xffffff,
+                    shininess: 100, 
+                    transparent: true,
+                    opacity: 0.6,
+                    side: THREE.DoubleSide
+                });
+                
+                const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+                scene.add(waterMesh);
+                
+                waterRef = { mesh: waterMesh, baseVertices: [] };
+                const wPos = waterGeo.attributes.position;
+                for(let i=0; i<wPos.count; i++) {
+                    waterRef.baseVertices.push({
+                        x: wPos.getX(i),
+                        y: wPos.getY(i),
+                        z: wPos.getZ(i),
+                        ang: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+
+            chunks[`${cx},${cz}`] = { mesh: mesh, water: waterRef, colliders: [mesh] };
+            
+            if (Math.random() > 0.4) generateProps(cx, cz, offsetX, offsetZ, centerBiome);
+        }
+
+        function generateProps(cx, cz, offsetX, offsetZ, biome) {
+            const count = 3 + Math.floor(Math.random() * 5);
+            const group = new THREE.Group();
+            const chunkRef = chunks[`${cx},${cz}`];
+            
+            for(let i=0; i<count; i++) {
+                const lx = (Math.random() - 0.5) * CONFIG.CHUNK_SIZE;
+                const lz = (Math.random() - 0.5) * CONFIG.CHUNK_SIZE;
+                const wx = offsetX + lx;
+                const wz = offsetZ + lz;
+
+                if (Math.sqrt(wx*wx + wz*wz) < 350) continue;
+
+                const h = getHeight(wx, wz, biome);
+
+                if (h > CONFIG.WATER_LEVEL + 1) {
+                    if(biome === 'desert') {
+                        const trunk = new THREE.Mesh(ASSETS.geoms.palmTrunk, ASSETS.mats.palmTrunk);
+                        trunk.position.set(wx, h+15, wz); 
+                        trunk.rotation.z = (Math.random()-0.5)*0.3;
+                        
+                        const leafGroup = new THREE.Group();
+                        leafGroup.position.set(wx + trunk.rotation.z*15, h+30, wz);
+                        
+                        for(let j=0; j<8; j++) {
+                            const leaf = new THREE.Mesh(ASSETS.geoms.palmLeaf, ASSETS.mats.palmLeaves);
+                            leaf.rotation.z = Math.PI/4 + (Math.random()*0.2); 
+                            leaf.rotation.y = (j/8) * Math.PI * 2;
+                            leaf.translateY(10); 
+                            leafGroup.add(leaf);
+                        }
+                        
+                        group.add(trunk); group.add(leafGroup);
+                        chunkRef.colliders.push(trunk);
+                    } 
+                    else if (biome === 'snow') {
+                        const crystal = new THREE.Mesh(ASSETS.geoms.crystal, ASSETS.mats.crystal);
+                        crystal.position.set(wx, h+6, wz); 
+                        crystal.rotation.y = Math.random() * Math.PI;
+                        group.add(crystal);
+                        chunkRef.colliders.push(crystal);
+                    } 
+                    else if (biome === 'obsidian') {
+                        const pillar = new THREE.Mesh(ASSETS.geoms.pillar, ASSETS.mats.pillar);
+                        pillar.position.set(wx, h+20, wz);
+                        group.add(pillar);
+                        chunkRef.colliders.push(pillar);
+                    }
+                    else if (biome === 'sakura') {
+                        const trunk = new THREE.Mesh(ASSETS.geoms.sakuraTrunk, ASSETS.mats.sakuraTrunk);
+                        trunk.position.set(wx, h+12, wz);
+                        
+                        const leavesMain = new THREE.Mesh(ASSETS.geoms.sakuraCloud, ASSETS.mats.sakuraLeaves);
+                        leavesMain.position.set(wx, h+24, wz);
+
+                        const branch1 = new THREE.Mesh(ASSETS.geoms.sakuraBranch, ASSETS.mats.sakuraTrunk);
+                        branch1.position.set(wx+2, h+20, wz);
+                        branch1.rotation.z = -Math.PI/4;
+                        const leaves1 = new THREE.Mesh(ASSETS.geoms.sakuraCloud, ASSETS.mats.sakuraLeaves);
+                        leaves1.position.set(0, 4, 0); 
+                        leaves1.scale.setScalar(0.7);
+                        branch1.add(leaves1);
+
+                        const branch2 = new THREE.Mesh(ASSETS.geoms.sakuraBranch, ASSETS.mats.sakuraTrunk);
+                        branch2.position.set(wx-2, h+19, wz+2);
+                        branch2.rotation.z = Math.PI/4;
+                        branch2.rotation.x = Math.PI/6;
+                        const leaves2 = new THREE.Mesh(ASSETS.geoms.sakuraCloud, ASSETS.mats.sakuraLeaves);
+                        leaves2.position.set(0, 4, 0); 
+                        leaves2.scale.setScalar(0.8);
+                        branch2.add(leaves2);
+
+                        group.add(trunk); group.add(leavesMain); group.add(branch1); group.add(branch2);
+                        chunkRef.colliders.push(trunk);
+                    }
+                    else if (biome === 'cyber') {
+                        const spike = new THREE.Mesh(ASSETS.geoms.cyberSpike, ASSETS.mats.cyberSpike);
+                        spike.position.set(wx, h+6, wz);
+                        spike.rotation.y = Math.random();
+                        group.add(spike);
+                        chunkRef.colliders.push(spike);
+                    }
+                    else {
+                        const trunk = new THREE.Mesh(ASSETS.geoms.bigTrunk, ASSETS.mats.bigTrunk);
+                        trunk.position.set(wx, h+7.5, wz); 
+                        
+                        const l1 = new THREE.Mesh(ASSETS.geoms.bigLeavesBottom, ASSETS.mats.bigLeaves);
+                        l1.position.set(wx, h+15, wz);
+                        const l2 = new THREE.Mesh(ASSETS.geoms.bigLeavesMid, ASSETS.mats.bigLeaves);
+                        l2.position.set(wx, h+22, wz);
+                        const l3 = new THREE.Mesh(ASSETS.geoms.bigLeavesTop, ASSETS.mats.bigLeaves);
+                        l3.position.set(wx, h+28, wz);
+                        
+                        trunk.castShadow = true; l1.castShadow = true; l2.castShadow = true; l3.castShadow = true;
+                        group.add(trunk); group.add(l1); group.add(l2); group.add(l3);
+                        chunkRef.colliders.push(trunk);
+                    }
+                }
+            }
+            scene.add(group);
+            chunkRef.props = group;
+        }
+
+        function updateChunks() {
+            const px = camera.position.x;
+            const pz = camera.position.z;
+            const cx = Math.floor(px / CONFIG.CHUNK_SIZE);
+            const cz = Math.floor(pz / CONFIG.CHUNK_SIZE);
+            
+            const activeKeys = new Set();
+            for (let x = -CONFIG.RENDER_DISTANCE; x <= CONFIG.RENDER_DISTANCE; x++) {
+                for (let z = -CONFIG.RENDER_DISTANCE; z <= CONFIG.RENDER_DISTANCE; z++) {
+                    const key = `${cx + x},${cz + z}`;
+                    activeKeys.add(key);
+                    if (!chunks[key]) {
+                        generateChunk(cx + x, cz + z);
+                    }
+                }
+            }
+
+            for (const key in chunks) {
+                if (!activeKeys.has(key)) {
+                    const data = chunks[key];
+                    scene.remove(data.mesh);
+                    if(data.water) {
+                        scene.remove(data.water.mesh);
+                        data.water.mesh.geometry.dispose();
+                        data.water.mesh.material.dispose();
+                    }
+                    data.mesh.geometry.dispose();
+                    data.mesh.material.dispose();
+                    if(data.props) scene.remove(data.props);
+                    delete chunks[key];
+                }
+            }
+            document.getElementById('coords').innerText = `${Math.floor(px)}, ${Math.floor(pz)}`;
+        }
+
+        function createWhales(count) {
+            const bodyGeo = ASSETS.geoms.whaleBody;
+            const tailGeo = ASSETS.geoms.whaleTail;
+            const finGeo = ASSETS.geoms.whaleFin;
+            const mat = ASSETS.mats.whaleBody;
+
+            for(let i=0; i<count; i++) {
+                const whale = new THREE.Group();
+                
+                const body = new THREE.Mesh(bodyGeo, mat);
+                body.rotation.z = Math.PI / 2; 
+                whale.add(body);
+
+                const tail = new THREE.Group();
+                tail.position.set(-40, 0, 0); // Adjusted for 4x size
+                const flukeL = new THREE.Mesh(tailGeo, mat);
+                flukeL.position.set(0, 0, 10);
+                flukeL.rotation.x = Math.PI / 2;
+                flukeL.rotation.z = Math.PI / 2;
+                flukeL.scale.set(1, 0.5, 1); 
+                
+                const flukeR = new THREE.Mesh(tailGeo, mat);
+                flukeR.position.set(0, 0, -10);
+                flukeR.rotation.x = -Math.PI / 2;
+                flukeR.rotation.z = Math.PI / 2;
+                flukeR.scale.set(1, 0.5, 1);
+
+                tail.add(flukeL); tail.add(flukeR);
+                whale.add(tail);
+
+                const finL = new THREE.Mesh(finGeo, mat);
+                finL.position.set(12, -8, 16);
+                finL.rotation.z = Math.PI / 3;
+                finL.rotation.x = Math.PI / 4;
+                
+                const finR = new THREE.Mesh(finGeo, mat);
+                finR.position.set(12, -8, -16);
+                finR.rotation.z = Math.PI / 3;
+                finR.rotation.x = -Math.PI / 4;
+                
+                whale.add(finL); whale.add(finR);
+
+                // FIX: Spawn whales across full SKY_RANGE
+                whale.position.set(
+                    (Math.random()-0.5) * CONFIG.SKY_RANGE, 
+                    100 + Math.random() * 50, 
+                    (Math.random()-0.5) * CONFIG.SKY_RANGE
+                );
+                scene.add(whale);
+                flyingEntities.push({
+                    mesh: whale,
+                    type: 'whale',
+                    speed: 8 + Math.random() * 5,
+                    angle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        function createBirds(count) {
+            const geo = new THREE.BufferGeometry();
+            const vertices = new Float32Array([0.5, 0, 0.2, -0.5, 0, 0.2, 0, 0, -0.5]);
+            geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            const mat = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide});
+
+            for(let i=0; i<count; i++) {
+                const bird = new THREE.Mesh(geo, mat);
+                // FIX: Spawn birds across full SKY_RANGE
+                bird.position.set(
+                    (Math.random()-0.5) * CONFIG.SKY_RANGE, 
+                    60 + Math.random() * 60, 
+                    (Math.random()-0.5) * CONFIG.SKY_RANGE
+                );
+                scene.add(bird);
+                flyingEntities.push({
+                    mesh: bird,
+                    type: 'bird',
+                    speed: 15 + Math.random() * 10,
+                    angle: Math.random() * Math.PI * 2,
+                    yBase: bird.position.y
+                });
+            }
+        }
+
+        function createCloudLayer(count) {
+            // FIX: Grid size matches full SKY_RANGE for infinite seamless tiling
+            const gridSize = CONFIG.SKY_RANGE; 
+            const cols = Math.ceil(Math.sqrt(count));
+            const spacing = gridSize / cols;
+
+            for(let i=0; i<count; i++) {
+                const group = new THREE.Group();
+                const puffs = 3 + Math.floor(Math.random() * 3);
+                for(let p=0; p<puffs; p++) {
+                    const puff = new THREE.Mesh(ASSETS.geoms.cloudPuff, ASSETS.mats.cloud);
+                    puff.position.set(
+                        (Math.random()-0.5) * 20,
+                        (Math.random()-0.5) * 10,
+                        (Math.random()-0.5) * 20
+                    );
+                    const scale = 0.8 + Math.random() * 0.8;
+                    puff.scale.setScalar(scale);
+                    puff.rotation.set(Math.random(), Math.random(), Math.random());
+                    group.add(puff);
+                }
+
+                // Distribute cloud clusters evenly over the large grid
+                const gx = (i % cols) * spacing - (gridSize/2);
+                const gz = Math.floor(i / cols) * spacing - (gridSize/2);
+                
+                group.position.set(
+                    gx + (Math.random()-0.5)*spacing,
+                    180 + Math.random()*60,
+                    gz + (Math.random()-0.5)*spacing
+                );
+                
+                scene.add(group);
+                flyingEntities.push({
+                    mesh: group,
+                    type: 'cloud',
+                    speed: 2 + Math.random(),
+                    angle: 0 
+                });
+            }
+        }
+
+        function createGrandCathedral(x, z) {
+            const group = new THREE.Group();
+            const scale = 3; 
+            const glassMat = new THREE.MeshPhongMaterial({color: 0x88ccff, shininess: 100, specular: 0xffffff, transparent: true, opacity: 0.6, side: THREE.DoubleSide});
+            const floorTex = createCheckerBoardTexture();
+            floorTex.repeat.set(16, 16);
+            const floorMat = new THREE.MeshPhongMaterial({map: floorTex, shininess: 60, specular: 0x444444, side: THREE.DoubleSide});
+
+            const addObj = (mesh) => {
+                group.add(mesh);
+                staticColliders.push(mesh);
+            };
+
+            const atriumRadius = 40 * scale;
+            const floorMesh = new THREE.Mesh(new THREE.CylinderGeometry(atriumRadius, atriumRadius, 2 * scale, 32), floorMat);
+            floorMesh.position.y = 1 * scale;
+            addObj(floorMesh);
+
+            const pillarHeight = 50 * scale;
+            const pRad = 35 * scale;
+            for(let i=0; i<8; i++) {
+                const angle = (i/8) * Math.PI * 2;
+                const px = Math.sin(angle) * pRad;
+                const pz = Math.cos(angle) * pRad;
+                const pillar = new THREE.Mesh(new THREE.CylinderGeometry(2*scale, 2*scale, pillarHeight, 16), glassMat);
+                pillar.position.set(px, pillarHeight/2, pz);
+                addObj(pillar);
+            }
+
+            const wingLen = 80 * scale;
+            const wingWid = 20 * scale;
+            const addWing = (angle) => {
+                const dist = atriumRadius + wingLen/2 - 2*scale;
+                const wx = Math.sin(angle) * dist;
+                const wz = Math.cos(angle) * dist;
+                const bridge = new THREE.Mesh(new THREE.BoxGeometry(wingWid, 2*scale, wingLen), floorMat);
+                bridge.position.set(wx, 1*scale, wz);
+                bridge.rotation.y = angle;
+                addObj(bridge);
+                const roof = new THREE.Mesh(new THREE.BoxGeometry(wingWid + 4*scale, 1*scale, wingLen), glassMat);
+                roof.position.set(wx, 25*scale, wz);
+                roof.rotation.y = angle;
+                addObj(roof);
+            };
+            addWing(0); addWing(Math.PI/2); addWing(Math.PI); addWing(-Math.PI/2);
+
+            group.position.set(x, 0, z);
+            scene.add(group);
+        }
+
+        function createSkySpheres() {
+            const geo = new THREE.SphereGeometry(4, 32, 32);
+            const mat = new THREE.MeshPhongMaterial({color: 0xffff00, specular: 0xffffff, shininess: 100, emissive: 0x222200});
+            for(let i=0; i<8; i++) {
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set((Math.random()-0.5)*300, 60 + Math.random()*40, (Math.random()-0.5)*300);
+                scene.add(mesh);
+                mesh.userData = { floatSpeed: 0.01 + Math.random() * 0.02, offset: Math.random() * Math.PI };
+            }
+        }
+
+        function setupPCControls() {
+            controls = new PointerLockControls(camera, document.body);
+            const instr = document.getElementById('instructions');
+            instr.addEventListener('click', () => { controls.lock(); if(bgm.paused) bgm.play().catch(e=>{}); });
+            controls.addEventListener('lock', () => instr.style.opacity = '0'); // Fade out
+            controls.addEventListener('unlock', () => instr.style.opacity = '1'); // Fade in
+            document.addEventListener('keydown', (e) => {
+                switch (e.code) { case 'KeyW': moveForward = true; break; case 'KeyA': moveLeft = true; break; case 'KeyS': moveBackward = true; break; case 'KeyD': moveRight = true; break; case 'Space': if(canJump) velocity.y += CONFIG.JUMP_FORCE; canJump = false; break; case 'ShiftLeft': isRunning = true; break; }
+            });
+            document.addEventListener('keyup', (e) => {
+                switch (e.code) { case 'KeyW': moveForward = false; break; case 'KeyA': moveLeft = false; break; case 'KeyS': moveBackward = false; break; case 'KeyD': moveRight = false; break; case 'ShiftLeft': isRunning = false; break; }
+            });
+        }
+        function setupMobileControls() {
+            const stick = document.getElementById('joystick-knob'); const zone = document.getElementById('joystick-zone'); const jumpBtn = document.getElementById('jump-btn'); const lookZone = document.getElementById('touch-look-zone'); const instr = document.getElementById('instructions');
+            instr.addEventListener('click', () => { instr.style.opacity = '0'; if(bgm.paused) bgm.play().catch(e=>{}); });
+            const maxDist = 40; const zoneRect = zone.getBoundingClientRect(); const center = { x: zoneRect.left + zoneRect.width/2, y: zoneRect.top + zoneRect.height/2 };
+            zone.addEventListener('touchmove', (e) => {
+                e.preventDefault(); const touch = e.touches[0]; const dx = touch.clientX - center.x; const dy = touch.clientY - center.y; const dist = Math.min(Math.sqrt(dx*dx + dy*dy), maxDist); const angle = Math.atan2(dy, dx);
+                const nx = Math.cos(angle) * dist; const ny = Math.sin(angle) * dist; stick.style.transform = `translate(calc(-50% + ${nx}px), calc(-50% + ${ny}px))`;
+                joyVector.x = nx / maxDist; joyVector.y = ny / maxDist; isRunning = dist > (maxDist * 0.9);
+            }, {passive: false});
+            zone.addEventListener('touchend', (e) => { e.preventDefault(); stick.style.transform = `translate(-50%, -50%)`; joyVector.x = 0; joyVector.y = 0; isRunning = false; });
+            let lastX = 0, lastY = 0; lookZone.addEventListener('touchstart', (e) => { lastX = e.changedTouches[0].clientX; lastY = e.changedTouches[0].clientY; });
+            lookZone.addEventListener('touchmove', (e) => { e.preventDefault(); const t = e.changedTouches[0]; const dx = t.clientX - lastX; const dy = t.clientY - lastY; camera.rotation.y -= dx * 0.005; camera.rotation.x -= dy * 0.005; camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x)); lastX = t.clientX; lastY = t.clientY; }, {passive: false});
+            jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if(canJump) velocity.y += CONFIG.JUMP_FORCE; canJump = false; });
+        }
+
+        function setupUI() {
+            const btn = document.getElementById('toggle-config'); const panel = document.getElementById('config-panel');
+            btn.addEventListener('click', () => { panel.style.display = panel.style.display === 'block' ? 'none' : 'block'; });
+            document.getElementById('fog-range').addEventListener('input', (e) => { scene.fog.density = parseFloat(e.target.value); });
+            document.getElementById('render-range').addEventListener('input', (e) => { CONFIG.RENDER_DISTANCE = parseInt(e.target.value); });
+        }
+        function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
+
+        // --- ANIMATION & PHYSICS ---
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = performance.now();
+            const fullDelta = Math.min((time - prevTime) / 1000, 0.1);
+            prevTime = time;
+
+            // ENTITY WRAPPING (Infinite Sky Logic)
+            // FIX: The wrap trigger must be HALF the total SKY_RANGE (spawn width)
+            // If width is 2000 (-1000 to 1000), trigger is at 1000.
+            const wrapTrigger = CONFIG.SKY_RANGE / 2;
+            
+            for(let ent of flyingEntities) {
+                // Movement
+                if (ent.type === 'whale') {
+                    ent.mesh.position.x += Math.sin(ent.angle) * ent.speed * fullDelta;
+                    ent.mesh.position.z += Math.cos(ent.angle) * ent.speed * fullDelta;
+                    ent.mesh.rotation.y = ent.angle; 
+                    ent.mesh.position.y += Math.sin(time * 0.001) * 0.05;
+                } else if (ent.type === 'bird') {
+                    ent.mesh.position.x += Math.sin(ent.angle) * ent.speed * fullDelta;
+                    ent.mesh.position.z += Math.cos(ent.angle) * ent.speed * fullDelta;
+                    ent.mesh.rotation.y = -ent.angle; 
+                    ent.mesh.position.y = ent.yBase + Math.sin(time * 0.005 + ent.mesh.position.x) * 2;
+                    if (Math.random() < 0.005) ent.angle += (Math.random()-0.5); 
+                } else if (ent.type === 'cloud') {
+                    ent.mesh.position.x += ent.speed * fullDelta;
+                }
+
+                // NEW: Infinite Wrap relative to Camera
+                const dx = ent.mesh.position.x - camera.position.x;
+                const dz = ent.mesh.position.z - camera.position.z;
+                
+                // If object is further than 1000 units away (half of 2000 width), move it 2000 units to the other side.
+                if (dx > wrapTrigger) ent.mesh.position.x -= CONFIG.SKY_RANGE;
+                if (dx < -wrapTrigger) ent.mesh.position.x += CONFIG.SKY_RANGE;
+                if (dz > wrapTrigger) ent.mesh.position.z -= CONFIG.SKY_RANGE;
+                if (dz < -wrapTrigger) ent.mesh.position.z += CONFIG.SKY_RANGE;
+            }
+
+            updateChunks();
+            for(const key in chunks) {
+                const water = chunks[key].water;
+                if (water) {
+                    const pos = water.mesh.geometry.attributes.position;
+                    for(let i=0; i < water.baseVertices.length; i++) {
+                        const v = water.baseVertices[i];
+                        const waveY = Math.sin(v.x * 0.2 + time * 0.002) * 0.5 + Math.cos(v.z * 0.15 + time * 0.002) * 0.5;
+                        pos.setY(i, CONFIG.WATER_LEVEL + waveY);
+                    }
+                    pos.needsUpdate = true; water.mesh.geometry.computeVertexNormals();
+                }
+            }
+            scene.traverse(o => { if(o.userData.spin) o.rotation.y += fullDelta; if(o.userData.floatSpeed) o.position.y += Math.sin(time * 0.001 + o.userData.offset) * 0.1; });
+
+            velocity.x -= velocity.x * 10.0 * fullDelta;
+            velocity.z -= velocity.z * 10.0 * fullDelta;
+            velocity.y -= 9.8 * 30.0 * fullDelta;
+
+            if (isMobile) {
+                if (joyVector.y !== 0 || joyVector.x !== 0) {
+                    const speed = isRunning ? CONFIG.RUN_SPEED : CONFIG.WALK_SPEED;
+                    const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); fwd.y = 0; fwd.normalize();
+                    const rgt = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion); rgt.y = 0; rgt.normalize();
+                    velocity.x += (rgt.x * joyVector.x + fwd.x * joyVector.y) * speed * fullDelta;
+                    velocity.z += (rgt.z * joyVector.x + fwd.z * joyVector.y) * speed * fullDelta;
+                }
+            } else if (controls.isLocked) {
+                playerDirection.z = Number(moveForward) - Number(moveBackward);
+                playerDirection.x = Number(moveRight) - Number(moveLeft);
+                playerDirection.normalize();
+                const speed = isRunning ? CONFIG.RUN_SPEED : CONFIG.WALK_SPEED;
+                if (moveForward || moveBackward) velocity.z -= playerDirection.z * speed * fullDelta;
+                if (moveLeft || moveRight) velocity.x -= playerDirection.x * speed * fullDelta;
+            }
+
+            const steps = CONFIG.PHYSICS_STEPS;
+            const dt = fullDelta / steps;
+            const playerObj = isMobile ? camera : controls.getObject();
+            const pos = playerObj.position;
+
+            const px = pos.x; const pz = pos.z;
+            const cx = Math.floor(px / CONFIG.CHUNK_SIZE);
+            const cz = Math.floor(pz / CONFIG.CHUNK_SIZE);
+            
+            let activeColliders = [...staticColliders]; 
+            for(let x=-1; x<=1; x++) {
+                for(let z=-1; z<=1; z++) {
+                    const k = `${cx+x},${cz+z}`;
+                    if(chunks[k]) activeColliders = activeColliders.concat(chunks[k].colliders);
+                }
+            }
+
+            const wallChecks = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)];
+            
+            for(let s=0; s<steps; s++) {
+                if (isMobile) { pos.x += velocity.x * dt; pos.z += velocity.z * dt; } 
+                else { controls.moveRight(-velocity.x * dt); controls.moveForward(-velocity.z * dt); }
+
+                const heightsToCheck = [pos.y - (CONFIG.PLAYER_HEIGHT * 0.5), pos.y - CONFIG.PLAYER_HEIGHT + 6.0];
+                
+                for(let checkY of heightsToCheck) {
+                    for (let dir of wallChecks) {
+                        raycasterHorizontal.ray.origin.copy(pos); raycasterHorizontal.ray.origin.y = checkY; raycasterHorizontal.ray.direction.copy(dir); raycasterHorizontal.far = CONFIG.PLAYER_RADIUS + 1.0;
+                        const hits = raycasterHorizontal.intersectObjects(activeColliders, false);
+                        
+                        if (hits.length > 0 && hits[0].distance < CONFIG.PLAYER_RADIUS) {
+                            const hit = hits[0];
+                            if (hit.face.normal.y < 0.5) {
+                                const overlap = CONFIG.PLAYER_RADIUS - hit.distance;
+                                const normal = hit.face.normal.clone().applyQuaternion(hit.object.quaternion); normal.y = 0; normal.normalize();
+                                pos.add(normal.multiplyScalar(overlap));
+                                if (velocity.dot(normal) < 0) velocity.sub(normal.multiplyScalar(velocity.dot(normal)));
+                            }
+                        }
+                    }
+                }
+
+                pos.y += velocity.y * dt;
+                if (velocity.y > 0) {
+                    raycasterDown.ray.origin.copy(pos); raycasterDown.ray.direction.set(0, 1, 0); raycasterDown.far = 5;
+                    if (raycasterDown.intersectObjects(activeColliders, false).length > 0) { velocity.y = 0; pos.y -= 0.1; }
+                }
+
+                raycasterDown.ray.origin.copy(pos); raycasterDown.ray.origin.y += CONFIG.PLAYER_HEIGHT * 0.5; raycasterDown.ray.direction.set(0, -1, 0); raycasterDown.far = CONFIG.PLAYER_HEIGHT * 1.5 + CONFIG.STEP_HEIGHT;
+                const groundHits = raycasterDown.intersectObjects(activeColliders, false);
+                let validGround = null;
+                for (let hit of groundHits) { if (hit.face.normal.y > 0.5) { validGround = hit; break; } }
+
+                if (validGround) {
+                    const footY = pos.y - CONFIG.PLAYER_HEIGHT; const groundY = validGround.point.y; const diff = groundY - footY;
+                    if (diff > -2.0 && diff < 6.0 && velocity.y <= 0) { velocity.y = 0; pos.y = groundY + CONFIG.PLAYER_HEIGHT; canJump = true; }
+                } else { canJump = false; }
+            }
+
+            if (pos.y < -100) { velocity.set(0,0,0); pos.set(0, 100, 0); }
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
