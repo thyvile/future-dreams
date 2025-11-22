@@ -268,11 +268,14 @@
                 
                 // Cloud Parts
                 cloudPuff: new THREE.DodecahedronGeometry(20, 0),
-                
-                // Whale Parts (SCALED UP 4X for visibility)
-                whaleBody: new THREE.CapsuleGeometry(20, 80, 8, 16),
-                whaleTail: new THREE.ConeGeometry(24, 20, 10),
-                whaleFin: new THREE.ConeGeometry(16, 32, 5)
+
+                // Whale Parts
+                whaleCore: new THREE.CapsuleGeometry(16, 70, 10, 24),
+                whaleHead: new THREE.SphereGeometry(22, 20, 16),
+                whaleTail: new THREE.CylinderGeometry(1.5, 9, 26, 12),
+                whaleFluke: new THREE.BoxGeometry(8, 1.4, 26),
+                whaleFin: new THREE.ConeGeometry(14, 30, 6),
+                whaleDorsal: new THREE.ConeGeometry(10, 26, 6)
             },
             mats: {
                 palmTrunk: new THREE.MeshPhongMaterial({color:0x8B4513}),
@@ -288,7 +291,23 @@
                 // Cloud (Basic Material for pure white)
                 cloud: new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.9}),
                 
-                whaleBody: new THREE.MeshPhongMaterial({color: 0x4466ff, shininess: 80, specular: 0x1111ff}),
+                whaleSkin: new THREE.MeshPhysicalMaterial({
+                    color: 0x2f3f9a,
+                    metalness: 0.2,
+                    roughness: 0.25,
+                    clearcoat: 0.65,
+                    clearcoatRoughness: 0.15,
+                    sheen: 0.4,
+                    sheenRoughness: 0.5,
+                    sheenColor: new THREE.Color(0x5ea7ff)
+                }),
+                whaleBelly: new THREE.MeshPhysicalMaterial({
+                    color: 0xd9ecff,
+                    metalness: 0.05,
+                    roughness: 0.35,
+                    clearcoat: 0.4,
+                    clearcoatRoughness: 0.2
+                }),
             }
         };
 
@@ -437,10 +456,11 @@
         function getBiomeInfo(x, z) {
             const moisture = noise(x * 0.002, z * 0.002);
             const temperature = noise(x * 0.002 + 100, z * 0.002 + 100);
-            
-            if (moisture > 0.6 && temperature < 0.4) return 'snow'; 
-            if (temperature > 0.7 && moisture < 0.3) return 'desert'; 
-            if (moisture < 0.2 && temperature < 0.3) return 'obsidian'; 
+
+            if (moisture > 0.68 && temperature > 0.35) return 'water';
+            if (moisture > 0.6 && temperature < 0.4) return 'snow';
+            if (temperature > 0.7 && moisture < 0.3) return 'desert';
+            if (moisture < 0.2 && temperature < 0.3) return 'obsidian';
             if (moisture > 0.5 && temperature > 0.5) return 'sakura'; 
             if (moisture < 0.3 && temperature > 0.7) return 'cyber'; 
             return 'grass'; 
@@ -455,7 +475,11 @@
             } else if (biome === 'obsidian') {
                 h = Math.abs(fbm(x*2, z*2)) * 40;
             } else if (biome === 'cyber') {
-                h = Math.floor(fbm(x, z) * 5) * 10; 
+                h = Math.floor(fbm(x, z) * 5) * 10;
+            } else if (biome === 'water') {
+                const shelf = fbm(x * 0.6, z * 0.6) * 6 - 8;
+                h = CONFIG.WATER_LEVEL - 2 + shelf;
+                h = Math.min(h, CONFIG.WATER_LEVEL + 2);
             } else {
                 h = fbm(x, z) * 30;
             }
@@ -499,10 +523,13 @@
 
                 let color = new THREE.Color();
                 
-                if (biome === 'desert') color.setHex(0xffaa00); 
+                if (biome === 'desert') color.setHex(0xffaa00);
                 else if (biome === 'snow') color.setHex(y > 40 ? 0xffffff : 0xddddff);
-                else if (biome === 'obsidian') color.setHex(0x220033); 
+                else if (biome === 'obsidian') color.setHex(0x220033);
                 else if (biome === 'sakura') color.setHex(0xffb7c5);
+                else if (biome === 'water') {
+                    color.setHSL(0.55, 0.32, 0.3 + Math.sin((x + z) * 0.01) * 0.02);
+                }
                 else if (biome === 'cyber') {
                     if (Math.floor(x)%10 === 0 || Math.floor(z)%10 === 0) color.setHex(0x00ff00);
                     else color.setHex(0x111111);
@@ -531,25 +558,43 @@
             scene.add(mesh);
             
             let waterRef = null;
+            const isWaterBiome = centerBiome === 'water';
             if (centerBiome !== 'desert' && centerBiome !== 'obsidian') {
-                const waterGeo = new THREE.PlaneGeometry(size, size, res/2, res/2);
+                const waterSegs = isWaterBiome ? res : Math.max(8, res/2);
+                const waterGeo = new THREE.PlaneGeometry(size, size, waterSegs, waterSegs);
                 waterGeo.rotateX(-Math.PI / 2);
                 waterGeo.translate(offsetX, CONFIG.WATER_LEVEL, offsetZ);
-                
-                const waterMat = new THREE.MeshPhongMaterial({
-                    color: 0x0066ff,
-                    emissive: 0x001133,
-                    specular: 0xffffff,
-                    shininess: 100, 
+
+                const waterMat = new THREE.MeshPhysicalMaterial({
+                    color: isWaterBiome ? 0x1f7ae0 : 0x0066ff,
+                    emissive: isWaterBiome ? 0x0b2d57 : 0x001133,
+                    emissiveIntensity: isWaterBiome ? 0.5 : 0.25,
+                    metalness: isWaterBiome ? 0.6 : 0.2,
+                    roughness: isWaterBiome ? 0.08 : 0.2,
+                    transmission: isWaterBiome ? 0.65 : 0.35,
+                    thickness: isWaterBiome ? 2.5 : 1.2,
+                    clearcoat: 1,
+                    clearcoatRoughness: 0.08,
+                    reflectivity: isWaterBiome ? 0.9 : 0.6,
                     transparent: true,
-                    opacity: 0.6,
-                    side: THREE.DoubleSide
+                    opacity: 0.8,
+                    side: THREE.DoubleSide,
+                    envMapIntensity: 1.1
                 });
-                
+
                 const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+                waterMesh.receiveShadow = true;
                 scene.add(waterMesh);
-                
-                waterRef = { mesh: waterMesh, baseVertices: [] };
+
+                waterRef = {
+                    mesh: waterMesh,
+                    baseVertices: [],
+                    waveAmp: isWaterBiome ? 1.6 : 0.6,
+                    waveFrequency: isWaterBiome ? 0.18 : 0.12,
+                    waveSpeed: isWaterBiome ? 0.0035 : 0.002,
+                    shimmerPhase: Math.random() * Math.PI * 2,
+                    baseGlow: isWaterBiome ? 0.5 : 0.25
+                };
                 const wPos = waterGeo.attributes.position;
                 for(let i=0; i<wPos.count; i++) {
                     waterRef.baseVertices.push({
@@ -567,6 +612,7 @@
         }
 
         function generateProps(cx, cz, offsetX, offsetZ, biome) {
+            if (biome === 'water') return;
             const count = 3 + Math.floor(Math.random() * 5);
             const group = new THREE.Group();
             const chunkRef = chunks[`${cx},${cz}`];
@@ -705,51 +751,89 @@
         }
 
         function createWhales(count) {
-            const bodyGeo = ASSETS.geoms.whaleBody;
+            const coreGeo = ASSETS.geoms.whaleCore;
+            const headGeo = ASSETS.geoms.whaleHead;
             const tailGeo = ASSETS.geoms.whaleTail;
+            const flukeGeo = ASSETS.geoms.whaleFluke;
             const finGeo = ASSETS.geoms.whaleFin;
-            const mat = ASSETS.mats.whaleBody;
+            const dorsalGeo = ASSETS.geoms.whaleDorsal;
+            const skinMat = ASSETS.mats.whaleSkin;
+            const bellyMat = ASSETS.mats.whaleBelly;
+            const eyeGeo = new THREE.SphereGeometry(1.4, 10, 8);
+            const eyeMat = new THREE.MeshStandardMaterial({ color: 0x0b0b10, emissive: 0x111122, emissiveIntensity: 0.6 });
 
             for(let i=0; i<count; i++) {
                 const whale = new THREE.Group();
-                
-                const body = new THREE.Mesh(bodyGeo, mat);
-                body.rotation.z = Math.PI / 2; 
+
+                const body = new THREE.Mesh(coreGeo, skinMat);
+                body.rotation.z = Math.PI / 2;
+                body.scale.set(1.05, 1.05, 1);
                 whale.add(body);
 
-                const tail = new THREE.Group();
-                tail.position.set(-40, 0, 0); // Adjusted for 4x size
-                const flukeL = new THREE.Mesh(tailGeo, mat);
-                flukeL.position.set(0, 0, 10);
-                flukeL.rotation.x = Math.PI / 2;
-                flukeL.rotation.z = Math.PI / 2;
-                flukeL.scale.set(1, 0.5, 1); 
-                
-                const flukeR = new THREE.Mesh(tailGeo, mat);
-                flukeR.position.set(0, 0, -10);
-                flukeR.rotation.x = -Math.PI / 2;
-                flukeR.rotation.z = Math.PI / 2;
-                flukeR.scale.set(1, 0.5, 1);
+                const belly = new THREE.Mesh(coreGeo, bellyMat);
+                belly.rotation.z = Math.PI / 2;
+                belly.scale.set(1.02, 0.55, 0.95);
+                belly.position.y = -6;
+                whale.add(belly);
 
+                const head = new THREE.Mesh(headGeo, skinMat);
+                head.position.set(38, 2, 0);
+                head.scale.set(1.05, 0.95, 0.95);
+                whale.add(head);
+
+                const jaw = new THREE.Mesh(headGeo, bellyMat);
+                jaw.scale.set(0.85, 0.55, 0.9);
+                jaw.position.set(40, -8, 0);
+                jaw.rotation.x = 0.2;
+                whale.add(jaw);
+
+                const tail = new THREE.Group();
+                tail.position.set(-40, 0, 0);
+
+                const tailStem = new THREE.Mesh(tailGeo, skinMat);
+                tailStem.rotation.z = Math.PI / 2;
+                tailStem.scale.set(1, 0.9, 1);
+                tail.add(tailStem);
+
+                const flukeL = new THREE.Mesh(flukeGeo, skinMat);
+                flukeL.position.set(-12, 0, 12);
+                flukeL.rotation.set(Math.PI, 0, Math.PI / 7);
+                const flukeR = new THREE.Mesh(flukeGeo, skinMat);
+                flukeR.position.set(-12, 0, -12);
+                flukeR.rotation.set(Math.PI, 0, -Math.PI / 7);
                 tail.add(flukeL); tail.add(flukeR);
+
                 whale.add(tail);
 
-                const finL = new THREE.Mesh(finGeo, mat);
-                finL.position.set(12, -8, 16);
-                finL.rotation.z = Math.PI / 3;
-                finL.rotation.x = Math.PI / 4;
-                
-                const finR = new THREE.Mesh(finGeo, mat);
-                finR.position.set(12, -8, -16);
-                finR.rotation.z = Math.PI / 3;
-                finR.rotation.x = -Math.PI / 4;
-                
+                const dorsal = new THREE.Mesh(dorsalGeo, skinMat);
+                dorsal.position.set(-6, 18, 0);
+                dorsal.rotation.x = Math.PI;
+                whale.add(dorsal);
+
+                const finL = new THREE.Mesh(finGeo, skinMat);
+                finL.position.set(12, -8, 18);
+                finL.rotation.set(Math.PI / 1.7, Math.PI / 9, Math.PI / 3);
+
+                const finR = new THREE.Mesh(finGeo, skinMat);
+                finR.position.set(12, -8, -18);
+                finR.rotation.set(Math.PI / 1.7, -Math.PI / 9, -Math.PI / 3);
+
                 whale.add(finL); whale.add(finR);
+
+                const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+                eyeL.position.set(45, 6, 6);
+                const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
+                eyeR.position.set(45, 6, -6);
+                whale.add(eyeL); whale.add(eyeR);
+
+                whale.userData.tail = tail;
+                whale.userData.fins = [finL, finR];
+                whale.userData.swimPhase = Math.random() * Math.PI * 2;
 
                 // FIX: Spawn whales across full SKY_RANGE
                 whale.position.set(
-                    (Math.random()-0.5) * CONFIG.SKY_RANGE, 
-                    100 + Math.random() * 50, 
+                    (Math.random()-0.5) * CONFIG.SKY_RANGE,
+                    100 + Math.random() * 50,
                     (Math.random()-0.5) * CONFIG.SKY_RANGE
                 );
                 scene.add(whale);
@@ -945,8 +1029,22 @@
                 if (ent.type === 'whale') {
                     ent.mesh.position.x += Math.sin(ent.angle) * ent.speed * fullDelta;
                     ent.mesh.position.z += Math.cos(ent.angle) * ent.speed * fullDelta;
-                    ent.mesh.rotation.y = ent.angle; 
-                    ent.mesh.position.y += Math.sin(time * 0.001) * 0.05;
+                    ent.mesh.rotation.y = ent.angle;
+
+                    const swimPhase = ent.mesh.userData.swimPhase || 0;
+                    const wave = Math.sin(time * 0.004 + swimPhase);
+                    ent.mesh.position.y = 110 + Math.sin(time * 0.0008 + swimPhase) * 12;
+
+                    if (ent.mesh.userData.tail) {
+                        ent.mesh.userData.tail.rotation.y = wave * 0.35;
+                        ent.mesh.userData.tail.rotation.x = Math.sin(time * 0.0025 + swimPhase) * 0.1;
+                    }
+
+                    if (ent.mesh.userData.fins) {
+                        const finFlap = Math.cos(time * 0.0035 + swimPhase) * 0.25;
+                        ent.mesh.userData.fins[0].rotation.x = Math.PI / 1.7 + finFlap;
+                        ent.mesh.userData.fins[1].rotation.x = Math.PI / 1.7 - finFlap;
+                    }
                 } else if (ent.type === 'bird') {
                     ent.mesh.position.x += Math.sin(ent.angle) * ent.speed * fullDelta;
                     ent.mesh.position.z += Math.cos(ent.angle) * ent.speed * fullDelta;
@@ -973,11 +1071,17 @@
                 const water = chunks[key].water;
                 if (water) {
                     const pos = water.mesh.geometry.attributes.position;
+                    const freq = water.waveFrequency || 0.12;
+                    const amp = water.waveAmp || 0.6;
+                    const speed = water.waveSpeed || 0.002;
+                    const phase = water.shimmerPhase || 0;
                     for(let i=0; i < water.baseVertices.length; i++) {
                         const v = water.baseVertices[i];
-                        const waveY = Math.sin(v.x * 0.2 + time * 0.002) * 0.5 + Math.cos(v.z * 0.15 + time * 0.002) * 0.5;
-                        pos.setY(i, CONFIG.WATER_LEVEL + waveY);
+                        const waveY = Math.sin(v.x * freq + time * speed + phase) * amp + Math.cos(v.z * freq * 0.8 + time * speed * 1.1) * (amp * 0.65);
+                        const ripple = Math.sin((v.x + v.z) * 0.08 + time * speed * 1.6 + v.ang) * (amp * 0.15);
+                        pos.setY(i, CONFIG.WATER_LEVEL + waveY + ripple);
                     }
+                    water.mesh.material.emissiveIntensity = (water.baseGlow || 0.25) + Math.sin(time * 0.004 + phase) * 0.08;
                     pos.needsUpdate = true; water.mesh.geometry.computeVertexNormals();
                 }
             }
