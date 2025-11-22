@@ -8,11 +8,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=VT323&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --sky: #6fb8ff;
+            --ui-text: #333333;
+            --ui-highlight: #ff00ff;
+            --ui-cyan: #00ffff;
+            --ui-panel: rgba(0, 0, 0, 0.8);
+            --ui-panel-border: #ff00ff;
+        }
+
         body {
             margin: 0;
             overflow: hidden;
             font-family: 'VT323', monospace; /* Retro terminal font */
-            background-color: #6fb8ff;
+            background-color: var(--sky);
             touch-action: none;
         }
         
@@ -20,7 +29,7 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            color: #333;
+            color: var(--ui-text);
             pointer-events: none;
             font-weight: bold;
             text-shadow: 1px 1px 0 #fff;
@@ -78,12 +87,12 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(0, 0, 0, 0.8);
+            background: var(--ui-panel);
             color: #fff;
             padding: 15px;
             border-radius: 0;
-            border: 2px solid #ff00ff;
-            box-shadow: 4px 4px 0 #00ffff;
+            border: 2px solid var(--ui-panel-border);
+            box-shadow: 4px 4px 0 var(--ui-cyan);
             z-index: 6;
             width: 200px;
             font-size: 1rem;
@@ -96,15 +105,15 @@
         button#toggle-config {
             pointer-events: auto;
             background: #000;
-            color: #ff00ff;
-            border: 2px solid #ff00ff;
+            color: var(--ui-highlight);
+            border: 2px solid var(--ui-highlight);
             padding: 5px 10px;
             cursor: pointer;
             font-family: 'Orbitron', sans-serif;
             text-transform: uppercase;
         }
         button#toggle-config:hover {
-            background: #ff00ff;
+            background: var(--ui-highlight);
             color: #000;
         }
 
@@ -223,20 +232,63 @@
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
         // --- GLOBAL CONFIG ---
+        const PALETTE = {
+            uiSky: '#6fb8ff',
+            fog: 0x7fc8ff,
+            desertSand: 0xffaa00,
+            snowHigh: 0xffffff,
+            snowLow: 0xddddff,
+            obsidian: 0x220033,
+            sakuraLeaves: 0xffb7c5,
+            grassSoil: 0xc2b280,
+            grassHue: 0.32,
+            palmTrunk: 0x8b4513,
+            palmLeaves: 0x18b03a,
+            bigTrunk: 0x553311,
+            bigLeaves: 0x00c84f,
+            crystal: 0xaaccff,
+            crystalEmissive: 0x112244,
+            pillar: 0x220033,
+            pillarEmissive: 0x110022,
+            sakuraTrunk: 0x3e2723,
+            cyberEmissive: 0x00ff00,
+            cyberBase: 0x000000,
+            cyberGrid: 0x111111,
+            cloud: 0xffffff,
+            whaleSkin: 0x2f3f9a,
+            whaleSheen: 0x5ea7ff,
+            whaleBelly: 0xd9ecff,
+            waterColor: 0x1b7fe8,
+            waterEmissive: 0x0c3f75,
+            hemiTop: 0xffffff,
+            hemiBottom: 0x444444,
+            dirLight: 0xffffee,
+            terrainSpecular: 0x111111,
+            eyeBase: 0x0b0b10,
+            eyeEmissive: 0x111122,
+            glass: 0x88ccff,
+            glassSpecular: 0xffffff,
+            plazaSpecular: 0x444444,
+            skyOrb: 0xffff00,
+            skyOrbEmissive: 0x222200
+        };
+
         const CONFIG = {
             CHUNK_SIZE: 100,
-            CHUNK_RES: 32,
+            CHUNK_RES: 28,
             RENDER_DISTANCE: 3,
-            FOG_COLOR: 0x7fc8ff,
-            WALK_SPEED: 800.0, 
+            FOG_COLOR: PALETTE.fog,
+            WALK_SPEED: 800.0,
             RUN_SPEED: 2500.0,
-            JUMP_FORCE: 140.6, 
+            JUMP_FORCE: 140.6,
             PLAYER_HEIGHT: 15,
-            PLAYER_RADIUS: 4, 
+            PLAYER_RADIUS: 4,
             WATER_LEVEL: -2,
+            GROUND_OFFSET: 2.5,
             PHYSICS_STEPS: 4,
             STEP_HEIGHT: 8.0,
-            SKY_RANGE: 2000 // The range for flying entity wrapping
+            SKY_RANGE: 2000, // The range for flying entity wrapping
+            WATER_NORMAL_INTERVAL: 12
         };
 
         // --- ASSET CACHE ---
@@ -278,31 +330,31 @@
                 whaleDorsal: new THREE.ConeGeometry(10, 26, 6)
             },
             mats: {
-                palmTrunk: new THREE.MeshPhongMaterial({color:0x8B4513}),
-                palmLeaves: new THREE.MeshPhongMaterial({color:0x18b03a}),
-                crystal: new THREE.MeshPhongMaterial({color:0xaaccff, shininess: 90, transparent:true, opacity:0.8, emissive: 0x112244}),
-                pillar: new THREE.MeshPhongMaterial({color:0x220033, emissive: 0x110022, shininess: 100}),
-                sakuraTrunk: new THREE.MeshPhongMaterial({color:0x3e2723}),
-                sakuraLeaves: new THREE.MeshPhongMaterial({color:0xffb7c5}),
-                cyberSpike: new THREE.MeshPhongMaterial({color:0x000000, emissive: 0x00ff00, wireframe: true}),
-                bigTrunk: new THREE.MeshPhongMaterial({ color: 0x553311 }),
-                bigLeaves: new THREE.MeshPhongMaterial({ color: 0x00c84f }),
+                palmTrunk: new THREE.MeshPhongMaterial({color: PALETTE.palmTrunk}),
+                palmLeaves: new THREE.MeshPhongMaterial({color: PALETTE.palmLeaves}),
+                crystal: new THREE.MeshPhongMaterial({color: PALETTE.crystal, shininess: 90, transparent:true, opacity:0.8, emissive: PALETTE.crystalEmissive}),
+                pillar: new THREE.MeshPhongMaterial({color: PALETTE.pillar, emissive: PALETTE.pillarEmissive, shininess: 100}),
+                sakuraTrunk: new THREE.MeshPhongMaterial({color: PALETTE.sakuraTrunk}),
+                sakuraLeaves: new THREE.MeshPhongMaterial({color: PALETTE.sakuraLeaves}),
+                cyberSpike: new THREE.MeshPhongMaterial({color: PALETTE.cyberBase, emissive: PALETTE.cyberEmissive, wireframe: true}),
+                bigTrunk: new THREE.MeshPhongMaterial({ color: PALETTE.bigTrunk }),
+                bigLeaves: new THREE.MeshPhongMaterial({ color: PALETTE.bigLeaves }),
                 
                 // Cloud (Basic Material for pure white)
-                cloud: new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.9}),
-                
+                cloud: new THREE.MeshBasicMaterial({color: PALETTE.cloud, transparent: true, opacity: 0.9}),
+
                 whaleSkin: new THREE.MeshPhysicalMaterial({
-                    color: 0x2f3f9a,
+                    color: PALETTE.whaleSkin,
                     metalness: 0.2,
                     roughness: 0.25,
                     clearcoat: 0.65,
                     clearcoatRoughness: 0.15,
                     sheen: 0.4,
                     sheenRoughness: 0.5,
-                    sheenColor: new THREE.Color(0x5ea7ff)
+                    sheenColor: new THREE.Color(PALETTE.whaleSheen)
                 }),
                 whaleBelly: new THREE.MeshPhysicalMaterial({
-                    color: 0xd9ecff,
+                    color: PALETTE.whaleBelly,
                     metalness: 0.05,
                     roughness: 0.35,
                     clearcoat: 0.4,
@@ -348,6 +400,8 @@
             else if (bgm.mozPreservesPitch !== undefined) bgm.mozPreservesPitch = false;
             else if (bgm.webkitPreservesPitch !== undefined) bgm.webkitPreservesPitch = false;
 
+            document.documentElement.style.setProperty('--sky', PALETTE.uiSky);
+
             isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
             if (isMobile) {
@@ -364,11 +418,11 @@
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
             camera.position.y = 50; 
 
-            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+            const hemiLight = new THREE.HemisphereLight(PALETTE.hemiTop, PALETTE.hemiBottom, 0.6);
             hemiLight.position.set(0, 200, 0);
             scene.add(hemiLight);
 
-            const dirLight = new THREE.DirectionalLight(0xffffee, 1.0);
+            const dirLight = new THREE.DirectionalLight(PALETTE.dirLight, 1.0);
             dirLight.position.set(50, 200, 100);
             dirLight.castShadow = true;
             dirLight.shadow.mapSize.width = 1024;
@@ -490,9 +544,10 @@
             
             const dist = Math.sqrt(x*x + z*z);
             if (dist < 300) {
-                h = h * (dist / 300); 
+                h = h * (dist / 300);
                 if(dist < 200) h = 0;
             }
+            if (biome !== 'water') h += CONFIG.GROUND_OFFSET;
             return h;
         }
 
@@ -527,21 +582,21 @@
 
                 let color = new THREE.Color();
                 
-                if (biome === 'desert') color.setHex(0xffaa00);
-                else if (biome === 'snow') color.setHex(y > 40 ? 0xffffff : 0xddddff);
-                else if (biome === 'obsidian') color.setHex(0x220033);
-                else if (biome === 'sakura') color.setHex(0xffb7c5);
+                if (biome === 'desert') color.setHex(PALETTE.desertSand);
+                else if (biome === 'snow') color.setHex(y > 40 ? PALETTE.snowHigh : PALETTE.snowLow);
+                else if (biome === 'obsidian') color.setHex(PALETTE.obsidian);
+                else if (biome === 'sakura') color.setHex(PALETTE.sakuraLeaves);
                 else if (biome === 'water') {
                     color.setHSL(0.57, 0.48, 0.32 + Math.sin((x + z) * 0.01) * 0.02);
                 }
                 else if (biome === 'cyber') {
-                    if (Math.floor(x)%10 === 0 || Math.floor(z)%10 === 0) color.setHex(0x00ff00);
-                    else color.setHex(0x111111);
+                    if (Math.floor(x)%10 === 0 || Math.floor(z)%10 === 0) color.setHex(PALETTE.cyberEmissive);
+                    else color.setHex(PALETTE.cyberGrid);
                 } else {
-                    if (y < CONFIG.WATER_LEVEL) color.setHex(0xc2b280);
+                    if (y < CONFIG.WATER_LEVEL) color.setHex(PALETTE.grassSoil);
                     else {
                         const v = (y / 50) + 0.2;
-                        color.setHSL(0.32, 0.8, Math.max(0.2, Math.min(0.8, v)));
+                        color.setHSL(PALETTE.grassHue, 0.8, Math.max(0.2, Math.min(0.8, v)));
                     }
                 }
                 colors.push(color.r, color.g, color.b);
@@ -552,9 +607,9 @@
 
             const mat = new THREE.MeshPhongMaterial({
                 vertexColors: true,
-                shininess: 10, 
-                specular: 0x111111,
-                flatShading: false 
+                shininess: 10,
+                specular: PALETTE.terrainSpecular,
+                flatShading: false
             });
 
             const mesh = new THREE.Mesh(geo, mat);
@@ -569,20 +624,20 @@
                 waterGeo.translate(offsetX, CONFIG.WATER_LEVEL, offsetZ);
 
                 const waterMat = new THREE.MeshPhysicalMaterial({
-                    color: 0x1b7fe8,
-                    emissive: 0x0c3f75,
-                    emissiveIntensity: 0.55,
-                    metalness: 0.75,
-                    roughness: 0.05,
-                    transmission: 0.7,
-                    thickness: 3.2,
+                    color: PALETTE.waterColor,
+                    emissive: PALETTE.waterEmissive,
+                    emissiveIntensity: 0.65,
+                    metalness: 0.9,
+                    roughness: 0.03,
+                    transmission: 0.75,
+                    thickness: 3.6,
                     clearcoat: 1,
-                    clearcoatRoughness: 0.04,
-                    reflectivity: 0.98,
+                    clearcoatRoughness: 0.03,
+                    reflectivity: 1,
                     transparent: true,
-                    opacity: 0.84,
+                    opacity: 0.85,
                     side: THREE.DoubleSide,
-                    envMapIntensity: 1.35
+                    envMapIntensity: 1.55
                 });
 
                 const waterMesh = new THREE.Mesh(waterGeo, waterMat);
@@ -595,7 +650,7 @@
                     waveAmp: 1.4,
                     waveFrequency: 0.18,
                     waveSpeed: 0.0035,
-                    shimmerPhase: Math.random() * Math.PI * 2,
+                    shimmerPhase: globalWaterPhase,
                     baseGlow: 0.55
                 };
                 const wPos = waterGeo.attributes.position;
@@ -772,7 +827,7 @@
             const skinMat = ASSETS.mats.whaleSkin;
             const bellyMat = ASSETS.mats.whaleBelly;
             const eyeGeo = new THREE.SphereGeometry(1.4, 10, 8);
-            const eyeMat = new THREE.MeshStandardMaterial({ color: 0x0b0b10, emissive: 0x111122, emissiveIntensity: 0.6 });
+            const eyeMat = new THREE.MeshStandardMaterial({ color: PALETTE.eyeBase, emissive: PALETTE.eyeEmissive, emissiveIntensity: 0.6 });
 
             for(let i=0; i<count; i++) {
                 const whale = new THREE.Group();
@@ -862,7 +917,7 @@
             const geo = new THREE.BufferGeometry();
             const vertices = new Float32Array([0.5, 0, 0.2, -0.5, 0, 0.2, 0, 0, -0.5]);
             geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            const mat = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide});
+            const mat = new THREE.MeshBasicMaterial({color: PALETTE.cloud, side: THREE.DoubleSide});
 
             for(let i=0; i<count; i++) {
                 const bird = new THREE.Mesh(geo, mat);
@@ -931,16 +986,13 @@
         function createGrandCathedral(x, z) {
             const group = new THREE.Group();
             const scale = 3;
-            const glassMat = new THREE.MeshPhongMaterial({color: 0x88ccff, shininess: 100, specular: 0xffffff, transparent: true, opacity: 0.6, side: THREE.DoubleSide});
+            const glassMat = new THREE.MeshPhongMaterial({color: PALETTE.glass, shininess: 100, specular: PALETTE.glassSpecular, transparent: true, opacity: 0.6, side: THREE.DoubleSide});
             const floorTex = createCheckerBoardTexture();
-            floorTex.repeat.set(16, 16);
+            floorTex.repeat.set(8, 8);
             floorTex.needsUpdate = true;
-            const bridgeTex = floorTex.clone();
-            bridgeTex.repeat.copy(floorTex.repeat);
-            bridgeTex.needsUpdate = true;
-            const floorMat = new THREE.MeshPhongMaterial({map: floorTex, shininess: 60, specular: 0x444444, side: THREE.DoubleSide});
+            const floorMat = new THREE.MeshPhongMaterial({map: floorTex, shininess: 60, specular: PALETTE.plazaSpecular, side: THREE.DoubleSide});
             const bridgeMat = floorMat.clone();
-            bridgeMat.map = bridgeTex;
+            bridgeMat.map = floorTex;
 
             const addObj = (mesh) => {
                 group.add(mesh);
@@ -987,7 +1039,7 @@
 
         function createSkySpheres() {
             const geo = new THREE.SphereGeometry(4, 32, 32);
-            const mat = new THREE.MeshPhongMaterial({color: 0xffff00, specular: 0xffffff, shininess: 100, emissive: 0x222200});
+            const mat = new THREE.MeshPhongMaterial({color: PALETTE.skyOrb, specular: PALETTE.glassSpecular, shininess: 100, emissive: PALETTE.skyOrbEmissive});
             for(let i=0; i<8; i++) {
                 const mesh = new THREE.Mesh(geo, mat);
                 mesh.position.set((Math.random()-0.5)*300, 60 + Math.random()*40, (Math.random()-0.5)*300);
@@ -1097,16 +1149,19 @@
                     const freq = water.waveFrequency || 0.12;
                     const amp = water.waveAmp || 0.6;
                     const speed = water.waveSpeed || 0.002;
-                    const phase = water.shimmerPhase || globalWaterPhase;
+                    const basePhase = globalWaterPhase;
+                    const waveTime = time * speed + basePhase;
+                    const rippleTime = time * speed * 1.6 + basePhase;
+                    const emissivePhase = basePhase + time * 0.004;
                     for(let i=0; i < water.baseVertices.length; i++) {
                         const v = water.baseVertices[i];
-                        const waveY = Math.sin(v.x * freq + time * speed + phase) * amp + Math.cos(v.z * freq * 0.8 + time * speed * 1.1) * (amp * 0.65);
-                        const ripple = Math.sin((v.x + v.z) * 0.08 + time * speed * 1.6 + phase) * (amp * 0.15);
+                        const waveY = Math.sin(v.x * freq + waveTime) * amp + Math.cos(v.z * freq * 0.8 + waveTime * 1.1) * (amp * 0.65);
+                        const ripple = Math.sin((v.x + v.z) * 0.08 + rippleTime) * (amp * 0.15);
                         pos.setY(i, CONFIG.WATER_LEVEL + waveY + ripple);
                     }
-                    water.mesh.material.emissiveIntensity = (water.baseGlow || 0.25) + Math.sin(time * 0.004 + phase) * 0.08;
+                    water.mesh.material.emissiveIntensity = (water.baseGlow || 0.25) + Math.sin(emissivePhase) * 0.08;
                     pos.needsUpdate = true;
-                    if (frameCount % 4 === 0) {
+                    if (frameCount % CONFIG.WATER_NORMAL_INTERVAL === 0) {
                         water.mesh.geometry.computeVertexNormals();
                     }
                 }
