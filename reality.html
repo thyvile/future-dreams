@@ -1136,17 +1136,38 @@
         }
         function setupMobileControls() {
             const stick = document.getElementById('joystick-knob'); const zone = document.getElementById('joystick-zone'); const jumpBtn = document.getElementById('jump-btn'); const lookZone = document.getElementById('touch-look-zone'); const instr = document.getElementById('instructions');
-            instr.addEventListener('click', () => { instr.style.opacity = '0'; if(bgm.paused) bgm.play().catch(e=>{}); });
-            const maxDist = 40; const zoneRect = zone.getBoundingClientRect(); const center = { x: zoneRect.left + zoneRect.width/2, y: zoneRect.top + zoneRect.height/2 };
-            zone.addEventListener('touchmove', (e) => {
-                e.preventDefault(); const touch = e.touches[0]; const dx = touch.clientX - center.x; const dy = touch.clientY - center.y; const dist = Math.min(Math.sqrt(dx*dx + dy*dy), maxDist); const angle = Math.atan2(dy, dx);
-                const nx = Math.cos(angle) * dist; const ny = Math.sin(angle) * dist; stick.style.transform = `translate(calc(-50% + ${nx}px), calc(-50% + ${ny}px))`;
-                joyVector.x = nx / maxDist; joyVector.y = ny / maxDist; isRunning = dist > (maxDist * 0.9);
-            }, {passive: false});
+            const hideInstructions = () => {
+                instr.style.opacity = '0';
+                instr.style.pointerEvents = 'none';
+                setTimeout(() => instr.style.display = 'none', 400);
+                if (bgm.paused) bgm.play().catch(e=>{});
+            };
+            instr.addEventListener('click', hideInstructions);
+            instr.addEventListener('touchstart', (e) => { e.preventDefault(); hideInstructions(); }, {passive: false});
+
+            const maxDist = 40; const center = { x: 0, y: 0 };
+            const updateCenter = () => {
+                const zoneRect = zone.getBoundingClientRect();
+                center.x = zoneRect.left + zoneRect.width / 2;
+                center.y = zoneRect.top + zoneRect.height / 2;
+            };
+            updateCenter();
+            window.addEventListener('resize', updateCenter);
+            window.addEventListener('orientationchange', () => setTimeout(updateCenter, 150));
+
+            const handleStickMove = (touch) => {
+                const dx = touch.clientX - center.x; const dy = touch.clientY - center.y; const dist = Math.min(Math.sqrt(dx*dx + dy*dy), maxDist); const angle = Math.atan2(dy, dx);
+                const nx = Math.cos(angle) * dist; const ny = Math.sin(angle) * dist; stick.style.transform = `translate(calc(-50% + ${nx}px), calc(-50% - ${ny}px))`;
+                joyVector.x = nx / maxDist; joyVector.y = ny * -1 / maxDist; isRunning = dist > (maxDist * 0.9);
+            };
+
+            zone.addEventListener('touchstart', (e) => { updateCenter(); e.preventDefault(); handleStickMove(e.touches[0]); }, {passive: false});
+            zone.addEventListener('touchmove', (e) => { e.preventDefault(); handleStickMove(e.touches[0]); }, {passive: false});
             zone.addEventListener('touchend', (e) => { e.preventDefault(); stick.style.transform = `translate(-50%, -50%)`; joyVector.x = 0; joyVector.y = 0; isRunning = false; });
-            let lastX = 0, lastY = 0; lookZone.addEventListener('touchstart', (e) => { lastX = e.changedTouches[0].clientX; lastY = e.changedTouches[0].clientY; });
+
+            let lastX = 0, lastY = 0; lookZone.addEventListener('touchstart', (e) => { lastX = e.changedTouches[0].clientX; lastY = e.changedTouches[0].clientY; hideInstructions(); });
             lookZone.addEventListener('touchmove', (e) => { e.preventDefault(); const t = e.changedTouches[0]; const dx = t.clientX - lastX; const dy = t.clientY - lastY; camera.rotation.y -= dx * 0.005; camera.rotation.x -= dy * 0.005; camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x)); lastX = t.clientX; lastY = t.clientY; }, {passive: false});
-            jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if(canJump) velocity.y += CONFIG.JUMP_FORCE; canJump = false; });
+            jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); hideInstructions(); if(canJump) velocity.y += CONFIG.JUMP_FORCE; canJump = false; });
         }
 
         function setupUI() {
