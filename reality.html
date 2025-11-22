@@ -376,6 +376,8 @@
         const flyingEntities = [];
         const treePositions = [];
         let bgm;
+        const bgmTracks = ['https://zazenfly.com/bgm.mp3', 'https://zazenfly.com/bgm2.mp3'];
+        let bgmIndex = 0;
         
         const velocity = new THREE.Vector3();
         const playerDirection = new THREE.Vector3();
@@ -397,13 +399,19 @@
         animate();
 
         function init() {
-            bgm = new Audio('https://zazenfly.com/bgm2.mp3');
-            bgm.loop = true;
+            bgm = new Audio(bgmTracks[bgmIndex]);
+            bgm.loop = false;
             bgm.volume = 0.5;
             bgm.playbackRate = 0.8;
             if (bgm.preservesPitch !== undefined) bgm.preservesPitch = false;
             else if (bgm.mozPreservesPitch !== undefined) bgm.mozPreservesPitch = false;
             else if (bgm.webkitPreservesPitch !== undefined) bgm.webkitPreservesPitch = false;
+            bgm.addEventListener('ended', () => {
+                bgmIndex = (bgmIndex + 1) % bgmTracks.length;
+                bgm.src = bgmTracks[bgmIndex];
+                bgm.load();
+                bgm.play().catch(()=>{});
+            });
 
             document.documentElement.style.setProperty('--sky', PALETTE.uiSky);
 
@@ -985,13 +993,13 @@
                     150 + Math.random() * 60,
                     (Math.random()-0.5) * CONFIG.SKY_RANGE
                 );
-                const scale = (4.5 + Math.random() * 2.5) / 2.5;
+                const scale = ((4.5 + Math.random() * 2.5) / 2.5) * 0.6;
                 bird.scale.setScalar(scale);
                 scene.add(bird);
                 flyingEntities.push({
                     mesh: bird,
                     type: 'bird',
-                    speed: 18 + Math.random() * 14,
+                    speed: 26 + Math.random() * 18,
                     angle: Math.random() * Math.PI * 2,
                     yBase: bird.position.y
                 });
